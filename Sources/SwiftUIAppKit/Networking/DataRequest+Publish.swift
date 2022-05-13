@@ -14,8 +14,8 @@ public extension DataRequest {
                 DispatchQueue.main.async {
                     do {
                         if statusCode >= 300 {
-                            let serverError = try JSONDecoder().decode(Error.self, from: data)
-                            contun.resume(throwing: serverError)
+                            let error = try self.decodeError(data: data)
+                            contun.resume(throwing: error)
                         } else {
                             let response = try JSONDecoder().decode(T.self, from: data)
                             contun.resume(returning: response)
@@ -39,8 +39,8 @@ public extension DataRequest {
                     do {
                         if statusCode >= 300 {
                             if let data = resData.data {
-                                let serverError = try JSONDecoder().decode(Error.self, from: data)
-                                contun.resume(throwing: serverError)
+                                let error = try self.decodeError(data: data)
+                                contun.resume(throwing: error)
                             } else {
                                 contun.resume(throwing: Error(message: "Network call failed"))
                             }
@@ -65,8 +65,8 @@ public extension DataRequest {
                 DispatchQueue.main.async {
                     do {
                         if statusCode >= 300 {
-                            let serverError = try JSONDecoder().decode(Error.self, from: data)
-                            contun.resume(throwing: serverError)
+                            let error = try self.decodeError(data: data)
+                            contun.resume(throwing: error)
                         } else {
                             contun.resume(returning: data)
                         }
@@ -81,4 +81,14 @@ public extension DataRequest {
 
 public struct EmptyResponse: Decodable {
 
+}
+
+extension DataRequest {
+    func decodeError(data: Data) throws -> Swift.Error {
+        if let dataSource = APIClient.shared.dataSource {
+            return try dataSource.decodeError(data: data)
+        } else {
+            return try JSONDecoder().decode(Error.self, from: data)
+        }
+    }
 }

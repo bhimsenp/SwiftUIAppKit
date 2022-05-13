@@ -3,7 +3,7 @@ import Alamofire
 import Combine
 
 extension DataRequest {
-    func publishResponseFuture<T: Decodable>() -> Future<T, Error> {
+    func publishResponseFuture<T: Decodable>() -> Future<T, Swift.Error> {
         Future {[unowned self] promise in
             responseData { resData in
                 guard let data = resData.data, let statusCode = resData.response?.statusCode else {
@@ -13,8 +13,8 @@ extension DataRequest {
                 DispatchQueue.main.async {
                     do {
                         if statusCode >= 300 {
-                            let response = try JSONDecoder().decode(Error.self, from: data)
-                            promise(.failure(response))
+                            let error = try self.decodeError(data: data)
+                            promise(.failure(error))
                         } else {
                             let response = try JSONDecoder().decode(T.self, from: data)
                             promise(.success(response))
@@ -38,7 +38,7 @@ extension DataRequest {
         }
     }
 
-    func publishResponseForMultipartFuture() -> Future<EmptyResponse, Error> {
+    func publishResponseForMultipartFuture() -> Future<EmptyResponse, Swift.Error> {
         Future {[unowned self] promise in
             responseData { resData in
                 guard let statusCode = resData.response?.statusCode else {
@@ -49,8 +49,8 @@ extension DataRequest {
                     do {
                         if statusCode >= 300 {
                             if let data = resData.data {
-                                let response = try JSONDecoder().decode(Error.self, from: data)
-                                promise(.failure(response))
+                                let error = try self.decodeError(data: data)
+                                promise(.failure(error))
                             } else {
                                 promise(.failure(Error(message: "Network call failed", code: nil)))
                             }
@@ -65,7 +65,7 @@ extension DataRequest {
         }
     }
 
-    func publishImageFuture() -> Future<Data, Error> {
+    func publishImageFuture() -> Future<Data, Swift.Error> {
         Future {[unowned self] promise in
             responseImage { resData in
                 guard let data = resData.data, let statusCode = resData.response?.statusCode else {
@@ -75,8 +75,8 @@ extension DataRequest {
                 DispatchQueue.main.async {
                     do {
                         if statusCode >= 300 {
-                            let response = try JSONDecoder().decode(Error.self, from: data)
-                            promise(.failure(response))
+                            let error = try self.decodeError(data: data)
+                            promise(.failure(error))
                         } else {
                             promise(.success(data))
                         }

@@ -8,6 +8,7 @@ public class APIClient {
 
     public static let shared = APIClient()
     public let baseUrl: String
+    public var dataSource: APIClientDataSource?
 
     init() {
         self.baseUrl = Bundle.main.object(forInfoDictionaryKey: "BaseURL") as? String ?? ""
@@ -56,30 +57,29 @@ public class APIClient {
     }
 
     private func commonHeaders(_ headers: [String: String] = [:]) -> HTTPHeaders {
-        let token = UserDefaultsService.shared.getString(withKey: "token")
-        let headers = token != nil ? ["Authorization": "Bearer \(token!)"] : [:]
-        return HTTPHeaders(headers.merging(headers, uniquingKeysWith: {$1}))
+        let commonHeaders = dataSource?.commonHeaders() ?? [:]
+        return HTTPHeaders(commonHeaders.merging(headers, uniquingKeysWith: {$1}))
     }
 }
 
 public extension APIClient {
-    func getFuture<T: Decodable>(url: String) -> Future<T, Error> {
+    func getFuture<T: Decodable>(url: String) -> Future<T, Swift.Error> {
         AF.request("\(baseUrl)\(url)", headers: commonHeaders()).publishResponseFuture()
     }
 
-    func postFuture<T: Decodable, U: Encodable>(url: String, body: U, headers: [String: String] = [:]) -> Future<T, Error> {
+    func postFuture<T: Decodable, U: Encodable>(url: String, body: U, headers: [String: String] = [:]) -> Future<T, Swift.Error> {
         AF.request("\(baseUrl)\(url)", method: .post, parameters: body, encoder: JSONParameterEncoder.default, headers: commonHeaders(headers)).publishResponseFuture()
     }
 
-    func putFuture<T: Decodable, U: Encodable>(url: String, body: U) -> Future<T, Error> {
+    func putFuture<T: Decodable, U: Encodable>(url: String, body: U) -> Future<T, Swift.Error> {
         AF.request("\(baseUrl)\(url)", method: .put, parameters: body, encoder: JSONParameterEncoder.default, headers: commonHeaders()).publishResponseFuture()
     }
 
-    func deleteFuture<T: Decodable>(url: String, headers: [String: String] = [:]) -> Future<T, Error> {
+    func deleteFuture<T: Decodable>(url: String, headers: [String: String] = [:]) -> Future<T, Swift.Error> {
         AF.request("\(baseUrl)\(url)", method: .delete, headers: commonHeaders(headers)).publishResponseFuture()
     }
 
-    func uploadImageFuture(url: String, imageData: Data, name: String, imageFieldName: String = "image", formData: [String: String]? = nil) -> Future<EmptyResponse, Error> {
+    func uploadImageFuture(url: String, imageData: Data, name: String, imageFieldName: String = "image", formData: [String: String]? = nil) -> Future<EmptyResponse, Swift.Error> {
         AF.upload(multipartFormData: { allFormData in
             formData?.forEach { (key, value) in
                 allFormData.append(value.data(using: .utf8)!, withName: key)
@@ -88,7 +88,7 @@ public extension APIClient {
         }, to: "\(baseUrl)\(url)", method: .post).publishResponseForMultipartFuture()
     }
 
-    func fetchImageFuture(url: String) -> Future<Data, Error> {
+    func fetchImageFuture(url: String) -> Future<Data, Swift.Error> {
         guard let url = URL(string: url) else {
             return Future { promise in
                 promise(.failure(Error(message: "Invalid url")))
@@ -133,4 +133,9 @@ public struct Error: Swift.Error, Decodable {
         self.message = message
         self.code = code
     }
+}
+
+public protocol APIClientDataSource {
+    func commonHeaders() -> [String: String]
+    func decodeError(data: Data) throws -> Swift.Error
 }
