@@ -28,7 +28,7 @@ public class APIClient {
     public func delete<T: Decodable>(url: String, headers: [String: String] = [:]) async throws -> T {
         try await AF.request("\(baseUrl)\(url)", method: .delete, headers: commonHeaders(headers)).publishResponse()
     }
-    
+
     public func uploadImage(url: String, imageData: Data, name: String, imageFieldName: String = "image", formData: [String: String]? = nil) async throws {
         try await AF.upload(multipartFormData: { allFormData in
             formData?.forEach { (key, value) in
@@ -78,7 +78,7 @@ public extension APIClient {
     func deleteFuture<T: Decodable>(url: String, headers: [String: String] = [:]) -> Future<T, Error> {
         AF.request("\(baseUrl)\(url)", method: .delete, headers: commonHeaders(headers)).publishResponseFuture()
     }
-    
+
     func uploadImageFuture(url: String, imageData: Data, name: String, imageFieldName: String = "image", formData: [String: String]? = nil) -> Future<EmptyResponse, Error> {
         AF.upload(multipartFormData: { allFormData in
             formData?.forEach { (key, value) in

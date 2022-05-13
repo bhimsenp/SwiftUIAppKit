@@ -11,7 +11,7 @@ let package = Package(
     products: [
         .library(
             name: "SwiftUIAppKit",
-            targets: ["SwiftUIAppKit"]),
+            targets: ["SwiftUIAppKit"])
     ],
     dependencies: [
         .package(url: "https://github.com/Alamofire/Alamofire.git", .upToNextMajor(from: "5.0.0")),
